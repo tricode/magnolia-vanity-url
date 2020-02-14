@@ -88,7 +88,7 @@ public class VirtualVanityUriMapping implements VirtualUriMapping {
         return result;
     }
 
-    protected boolean isVanityCandidate(String uri) {
+    private boolean isVanityCandidate(String uri) {
         boolean contentUri = !isRootRequest(uri);
         if (contentUri) {
             Map<String, String> excludes = _vanityUrlModule.get().getExcludes();
@@ -106,7 +106,7 @@ public class VirtualVanityUriMapping implements VirtualUriMapping {
         return uri.length() <= 1;
     }
 
-    protected String getUriOfVanityUrl(final String vanityUrl) {
+    private String getUriOfVanityUrl(final String vanityUrl) {
         final String siteName = retrieveSite();
         Node node = null;
 

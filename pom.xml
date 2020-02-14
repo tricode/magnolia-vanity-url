@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.aperto.magkit</groupId>
     <artifactId>magnolia-vanity-url</artifactId>
-    <version>1.5.4-SNAPSHOT</version>
+    <version>1.5.3-FORWARDING</version>
+
     <packaging>jar</packaging>
     <name>magnolia-vanity-url Magnolia Module</name>
 
@@ -16,7 +18,7 @@
     </organization>
 
     <properties>
-        <magnoliaVersion>5.6</magnoliaVersion>
+        <magnoliaVersion>5.7.6</magnoliaVersion>
 
         <source.javaversion>1.8</source.javaversion>
         <target.javaversion>1.8</target.javaversion>
@@ -70,6 +72,11 @@
             <groupId>info.magnolia.site</groupId>
             <artifactId>magnolia-site-app</artifactId>
             <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>info.magnolia.dam</groupId>
+            <artifactId>magnolia-dam-templating</artifactId>
+            <version>2.4.1</version>
         </dependency>
         <dependency>
             <groupId>net.glxn</groupId>
@@ -213,8 +220,17 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>2.3.1</version>
+                    <version>3.0.2</version>
                     <executions>
+                        <execution>
+                            <id>default-jar</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <classifier>tricode</classifier>
+                            </configuration>
+                        </execution>
                         <execution>
                             <id>create-test-jar</id>
                             <goals>
@@ -290,7 +306,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore />
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -332,10 +348,10 @@
     </profiles>
 
     <scm>
-        <url>https://github.com/aperto/magnolia-vanity-url.git</url>
-        <connection>scm:git:https://github.com/aperto/magnolia-vanity-url.git</connection>
-        <developerConnection>scm:git:https://github.com/aperto/magnolia-vanity-url.git</developerConnection>
-        <tag>HEAD</tag>
+        <connection>scm:git:git@github.com:tricode/magnolia-vanity-url.git</connection>
+        <developerConnection>scm:git:git@github.com:tricode/magnolia-vanity-url.git</developerConnection>
+        <url>https://github.com/tricode/magnolia-vanity-url.git</url>
+        <tag>1.5.3</tag>
     </scm>
 
     <distributionManagement>
