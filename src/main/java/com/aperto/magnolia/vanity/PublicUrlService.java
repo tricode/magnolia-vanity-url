@@ -23,6 +23,7 @@ package com.aperto.magnolia.vanity;
  */
 
 import info.magnolia.link.LinkUtil;
+import info.magnolia.repository.RepositoryConstants;
 
 import javax.jcr.Node;
 
@@ -42,7 +43,7 @@ public interface PublicUrlService {
      * @param node vanity url node
      * @return vanity url
      */
-    String createVanityUrl(Node node);
+    String createVanityUrl(final Node node);
 
     /**
      * Creates the public url for displaying as target link in app view.
@@ -50,10 +51,10 @@ public interface PublicUrlService {
      * @param node vanity url node
      * @return public url
      */
-    String createTargetUrl(Node node);
+    String createTargetUrl(final Node node);
 
     default String getExternalLinkFromId(final String nodeId) {
-        Node nodeFromId = getNodeFromId(nodeId);
+        Node nodeFromId = getNodeFromId(RepositoryConstants.WEBSITE, nodeId);
         return nodeFromId == null ? EMPTY : LinkUtil.createExternalLink(nodeFromId);
     }
 }

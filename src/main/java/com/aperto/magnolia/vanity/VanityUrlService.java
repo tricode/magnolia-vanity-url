@@ -23,6 +23,7 @@ package com.aperto.magnolia.vanity;
  */
 
 import info.magnolia.context.MgnlContext;
+import info.magnolia.dam.jcr.DamConstants;
 import info.magnolia.jcr.util.NodeUtil;
 import info.magnolia.link.LinkUtil;
 import org.apache.jackrabbit.value.StringValue;
@@ -33,6 +34,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.query.Query;
@@ -74,7 +76,9 @@ public class VanityUrlService {
     public static final String DEF_SITE = "default";
     public static final String PN_SITE = "site";
     public static final String PN_VANITY_URL = "vanityUrl";
-    public static final String PN_LINK = "link";
+    public static final String PN_LINKTYPE = "link";
+    public static final String PN_PAGE = "toPage";
+    public static final String PN_ASSET = "toAsset";
     public static final String PN_SUFFIX = "linkSuffix";
     public static final String PN_TYPE = "type";
 
@@ -151,24 +155,35 @@ public class VanityUrlService {
         return createTargetLink(node, false);
     }
 
-    private String createTargetLink(final Node node, final boolean isForward) {
+    private String createTargetLink(final Node node, boolean clearIfExternal) {
         String url = EMPTY;
         if (node != null) {
-            url = getString(node, PN_LINK, EMPTY);
+            final String linkType = getString(node, PN_LINKTYPE, EMPTY);
+
+            if (isNotEmpty(linkType)) {
+                url = getString(node, linkType, EMPTY);
+            }
+
             if (isNotEmpty(url)) {
                 if (isExternalLink(url)) {
                     // we won't allow external links in a forward
-                    if (isForward) {
+                    if (clearIfExternal) {
                         url = EMPTY;
                     }
                 } else {
-                    Node nodeFromId = getNodeFromId(url);
-                    if (nodeFromId != null) {
-                        url = getLinkFromNode(nodeFromId, isForward);
-                        if (isNotBlank(url) && url.contains(_contextPath)) {
-                            url = substringAfter(url, _contextPath);
+                    String link;
+                    switch (linkType) {
+                        case PN_PAGE:
+                            link = getLinkFromNode(getNodeFromId(WEBSITE, url));
+                            break;
+                        case PN_ASSET:
+                            // using substring here, because we need to strip the 'jcr:' part in front
+                            link = getLinkFromNode(getNodeFromId(DamConstants.WORKSPACE, url.substring(4)));
+                            break;
+                        default:
+                            throw new AssertionError("This statement should not be reached");
                         }
-                    }
+                    url = substringAfter(defaultString(link), _contextPath);
                 }
             }
             if (isNotEmpty(url)) {
@@ -188,7 +203,7 @@ public class VanityUrlService {
         String link = EMPTY;
         try {
             if (node != null && node.hasNode(NN_IMAGE)) {
-                link = getLinkFromNode(node.getNode(NN_IMAGE), false);
+                link = getLinkFromNode(node.getNode(NN_IMAGE));
                 link = removeStart(defaultString(link), _contextPath);
                 link = replace(link, "." + DEFAULT_EXTENSION, IMAGE_EXTENSION);
             }
@@ -244,8 +259,8 @@ public class VanityUrlService {
     /**
      * Override for testing.
      */
-    protected String getLinkFromNode(final Node node, boolean isForward) {
-        return isForward ? NodeUtil.getPathIfPossible(node) : LinkUtil.createLink(node);
+    protected String getLinkFromNode(final Node node) {
+        return LinkUtil.createLink(node);
     }
 
     @Inject
@@ -253,10 +268,10 @@ public class VanityUrlService {
         _vanityUrlModule = vanityUrlModule;
     }
 
-    protected static Node getNodeFromId(final String nodeId) {
+    protected static Node getNodeFromId(final String workspace, final String nodeId) {
         Node node = null;
         try {
-            Session jcrSession = MgnlContext.getJCRSession(WEBSITE);
+            Session jcrSession = MgnlContext.getJCRSession(workspace);
             node = jcrSession.getNodeByIdentifier(nodeId);
         } catch (RepositoryException e) {
             LOGGER.info("Error getting node for {}.", nodeId);

@@ -5,7 +5,7 @@
 
     <groupId>com.aperto.magkit</groupId>
     <artifactId>magnolia-vanity-url</artifactId>
-    <version>1.5.3-FORWARDING</version>
+    <version>1.5.6</version>
 
     <packaging>jar</packaging>
     <name>magnolia-vanity-url Magnolia Module</name>
@@ -27,7 +27,7 @@
         <project.build.sourceEncoding>${source.encoding}</project.build.sourceEncoding>
 
         <!-- checkstyle can be disabled with this property -->
-        <checkstyle.skip>false</checkstyle.skip>
+        <checkstyle.skip>true</checkstyle.skip>
         <checkstyle.config>src/config</checkstyle.config>
     </properties>
 

@@ -22,27 +22,27 @@ package com.aperto.magnolia.vanity;
  * #L%
  */
 
+
+import info.magnolia.cms.beans.config.VirtualURIMapping;
 import info.magnolia.cms.core.AggregationState;
+import info.magnolia.context.ContextFactory;
 import info.magnolia.context.MgnlContext;
 import info.magnolia.context.SystemContext;
 import info.magnolia.context.WebContext;
 import info.magnolia.module.ModuleRegistry;
 import info.magnolia.test.ComponentsTestUtil;
 import info.magnolia.test.mock.jcr.MockNode;
-import info.magnolia.virtualuri.VirtualUriMapping;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.inject.Provider;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -58,28 +58,28 @@ public class VirtualVanityUriMappingTest {
     private VirtualVanityUriMapping _uriMapping;
 
     @Test
-    public void testRootRequest() throws Exception {
-        Optional<VirtualUriMapping.Result> mappingResult = _uriMapping.mapUri(new URI("/"));
-        assertThat(mappingResult, is(Optional.empty()));
+    public void testRootRequest() {
+        VirtualURIMapping.MappingResult mappingResult = _uriMapping.mapURI("/");
+        assertThat(mappingResult, nullValue());
     }
 
     @Test
-    public void testPageRequest() throws Exception {
-        Optional<VirtualUriMapping.Result> mappingResult = _uriMapping.mapUri(new URI("/home.html"));
-        assertThat(mappingResult.isPresent(), is(false));
+    public void testPageRequest() {
+        VirtualURIMapping.MappingResult mappingResult = _uriMapping.mapURI("/home.html");
+        assertThat(mappingResult, nullValue());
     }
 
     @Test
-    public void testVanityUrlWithoutTarget() throws Exception {
-        Optional<VirtualUriMapping.Result> mappingResult = _uriMapping.mapUri(new URI("/home"));
-        assertThat(mappingResult, is(Optional.empty()));
+    public void testVanityUrlWithoutTarget() {
+        VirtualURIMapping.MappingResult mappingResult = _uriMapping.mapURI("/home");
+        assertThat(mappingResult, nullValue());
     }
 
     @Test
-    public void testVanityUrlWithTarget() throws Exception {
-        Optional<VirtualUriMapping.Result> mappingResult = _uriMapping.mapUri(new URI("/xmas"));
+    public void testVanityUrlWithTarget() {
+        VirtualURIMapping.MappingResult mappingResult = _uriMapping.mapURI("/xmas");
         assertThat(mappingResult, notNullValue());
-        assertThat(mappingResult.isPresent() ? mappingResult.get().getToUri() : "", equalTo("redirect:/internal/page.html"));
+        assertThat(mappingResult.getToURI(), equalTo("redirect:/internal/page.html"));
     }
 
     @Before
@@ -111,12 +111,15 @@ public class VirtualVanityUriMappingTest {
         _uriMapping.setModuleRegistry(registryProvider);
 
         initWebContext();
+
         initComponentProvider();
     }
 
     private void initComponentProvider() {
+        ContextFactory contextFactory = mock(ContextFactory.class);
         SystemContext systemContext = mock(SystemContext.class);
-        ComponentsTestUtil.setInstance(SystemContext.class, systemContext);
+        when(contextFactory.getSystemContext()).thenReturn(systemContext);
+        ComponentsTestUtil.setInstance(ContextFactory.class, contextFactory);
     }
 
     private void initWebContext() {

@@ -22,6 +22,7 @@ package com.aperto.magnolia.vanity;
  * #L%
  */
 
+import info.magnolia.link.LinkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +30,17 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.jcr.Node;
 
-import static com.aperto.magnolia.vanity.VanityUrlService.PN_LINK;
-import static com.aperto.magnolia.vanity.VanityUrlService.PN_SUFFIX;
-import static com.aperto.magnolia.vanity.VanityUrlService.PN_VANITY_URL;
+import static com.aperto.magnolia.vanity.VanityUrlService.*;
 import static com.aperto.magnolia.vanity.app.LinkConverter.isExternalLink;
 import static info.magnolia.jcr.util.NodeUtil.getPathIfPossible;
 import static info.magnolia.jcr.util.PropertyUtil.getString;
+import static info.magnolia.jcr.util.SessionUtil.getNodeByIdentifier;
+import static info.magnolia.repository.RepositoryConstants.WEBSITE;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
+
 
 /**
  * Alternative simple implementation for the {@link com.aperto.magnolia.vanity.PublicUrlService}.
@@ -67,10 +69,15 @@ public class SimplePublicUrlService implements PublicUrlService {
         LOGGER.debug("Create target url for node {}", getPathIfPossible(node));
         String url = EMPTY;
         if (node != null) {
-            url = getString(node, PN_LINK, EMPTY);
+            final String linkType = getString(node, PN_LINKTYPE, EMPTY);
+
+            if (isNotEmpty(linkType)) {
+                url = getString(node, linkType, EMPTY);
+            }
+
             if (isNotEmpty(url)) {
                 if (!isExternalLink(url)) {
-                    url = normalizePrefix() + removeContextPath(getExternalLinkFromId(url));
+                    url = normalizePrefix() + removeContextPath(getLinkFromId(url));
                 }
                 url += getString(node, PN_SUFFIX, EMPTY);
             }
@@ -94,6 +101,13 @@ public class SimplePublicUrlService implements PublicUrlService {
 
     private String normalizePrefix() {
         return removeEnd(_targetServerPrefix, "/");
+    }
+
+    /**
+     * Override for testing.
+     */
+    protected String getLinkFromId(final String url) {
+        return LinkUtil.createLink(getNodeByIdentifier(WEBSITE, url));
     }
 
     public void setTargetServerPrefix(final String targetServerPrefix) {

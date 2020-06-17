@@ -72,8 +72,9 @@ public class VanityUrlServiceTest {
     @Test
     public void testTargetUrlInternalWithAnchor() throws Exception {
         MockNode mockNode = new MockNode("node");
-        mockNode.setProperty("link", TEST_UUID);
-        mockNode.setProperty("linkSuffix", "#anchor1");
+        mockNode.setProperty(VanityUrlService.PN_LINKTYPE, VanityUrlService.PN_PAGE);
+        mockNode.setProperty(VanityUrlService.PN_PAGE, TEST_UUID);
+        mockNode.setProperty(VanityUrlService.PN_SUFFIX, "#anchor1");
 
         assertThat(_service.createRedirectUrl(mockNode), equalTo("redirect:/internal/page.html#anchor1"));
         assertThat(_service.createPreviewUrl(mockNode), equalTo("/internal/page.html#anchor1"));
@@ -82,7 +83,8 @@ public class VanityUrlServiceTest {
     @Test
     public void testTargetUrlExternal() throws Exception {
         MockNode mockNode = new MockNode("node");
-        mockNode.setProperty("link", "http://www.aperto.de");
+        mockNode.setProperty(VanityUrlService.PN_LINKTYPE, VanityUrlService.PN_PAGE);
+        mockNode.setProperty(VanityUrlService.PN_PAGE, "http://www.aperto.de");
 
         assertThat(_service.createRedirectUrl(mockNode), equalTo("redirect:http://www.aperto.de"));
         assertThat(_service.createPreviewUrl(mockNode), equalTo("http://www.aperto.de"));
@@ -91,25 +93,28 @@ public class VanityUrlServiceTest {
     @Test
     public void testForward() throws Exception {
         MockNode mockNode = new MockNode("node");
-        mockNode.setProperty("link", TEST_UUID_FORWARD);
-        mockNode.setProperty("type", "forward");
+        mockNode.setProperty(VanityUrlService.PN_LINKTYPE, VanityUrlService.PN_PAGE);
+        mockNode.setProperty(VanityUrlService.PN_PAGE, TEST_UUID_FORWARD);
+        mockNode.setProperty(VanityUrlService.PN_TYPE, "forward");
         assertThat(_service.createRedirectUrl(mockNode), equalTo("forward:/internal/forward/page.html"));
     }
 
     @Test
     public void testForwardWithAnchor() throws Exception {
         MockNode mockNode = new MockNode("node");
-        mockNode.setProperty("link", TEST_UUID_FORWARD);
-        mockNode.setProperty("type", "forward");
-        mockNode.setProperty("linkSuffix", "#anchor1");
+        mockNode.setProperty(VanityUrlService.PN_LINKTYPE, VanityUrlService.PN_PAGE);
+        mockNode.setProperty(VanityUrlService.PN_PAGE, TEST_UUID_FORWARD);
+        mockNode.setProperty(VanityUrlService.PN_TYPE, "forward");
+        mockNode.setProperty(VanityUrlService.PN_SUFFIX, "#anchor1");
         assertThat(_service.createRedirectUrl(mockNode), equalTo("forward:/internal/forward/page.html#anchor1"));
     }
 
     @Test
     public void testForwardWithInvalidUrl() throws Exception {
         MockNode mockNode = new MockNode("node");
-        mockNode.setProperty("link", "http://www.aperto.de");
-        mockNode.setProperty("type", "forward");
+        mockNode.setProperty(VanityUrlService.PN_LINKTYPE, VanityUrlService.PN_PAGE);
+        mockNode.setProperty(VanityUrlService.PN_PAGE, "http://www.aperto.de");
+        mockNode.setProperty(VanityUrlService.PN_TYPE, "forward");
         assertThat(_service.createRedirectUrl(mockNode), equalTo(""));
     }
 
@@ -170,7 +175,7 @@ public class VanityUrlServiceTest {
         _service = new VanityUrlService() {
 
             @Override
-            protected String getLinkFromNode(final Node node, final boolean isForward) {
+            protected String getLinkFromNode(final Node node) {
                 String link = "";
                 if (node != null) {
                     try {
@@ -181,6 +186,7 @@ public class VanityUrlServiceTest {
                 }
                 return link;
             }
+
         };
 
         Provider<VanityUrlModule> moduleProvider = mock(Provider.class);

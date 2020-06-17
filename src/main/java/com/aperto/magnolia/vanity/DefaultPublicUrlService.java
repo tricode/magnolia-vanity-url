@@ -23,6 +23,7 @@ package com.aperto.magnolia.vanity;
  */
 
 import info.magnolia.cms.beans.config.ServerConfiguration;
+import info.magnolia.link.LinkUtil;
 import info.magnolia.module.site.Domain;
 import info.magnolia.module.site.Site;
 import info.magnolia.module.site.SiteManager;
@@ -35,13 +36,15 @@ import javax.jcr.Node;
 import java.util.Collection;
 
 import static com.aperto.magnolia.vanity.VanityUrlService.DEF_SITE;
-import static com.aperto.magnolia.vanity.VanityUrlService.PN_LINK;
+import static com.aperto.magnolia.vanity.VanityUrlService.PN_LINKTYPE;
 import static com.aperto.magnolia.vanity.VanityUrlService.PN_SITE;
 import static com.aperto.magnolia.vanity.VanityUrlService.PN_SUFFIX;
 import static com.aperto.magnolia.vanity.VanityUrlService.PN_VANITY_URL;
 import static com.aperto.magnolia.vanity.app.LinkConverter.isExternalLink;
 import static info.magnolia.jcr.util.NodeUtil.getPathIfPossible;
 import static info.magnolia.jcr.util.PropertyUtil.getString;
+import static info.magnolia.jcr.util.SessionUtil.getNodeByIdentifier;
+import static info.magnolia.repository.RepositoryConstants.WEBSITE;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
@@ -105,16 +108,36 @@ public class DefaultPublicUrlService implements PublicUrlService {
         LOGGER.debug("Create target url for node {}", getPathIfPossible(node));
         String url = EMPTY;
         if (node != null) {
-            url = getString(node, PN_LINK, EMPTY);
+            final String linkType = getString(node, PN_LINKTYPE, EMPTY);
+
+            if (isNotEmpty(linkType)) {
+                url = getString(node, linkType, EMPTY);
+            }
+
             if (isNotEmpty(url)) {
                 if (!isExternalLink(url)) {
-                    url = getExternalLinkFromId(url);
+                    url = getExternalLinkFromId(url, linkType);
                     url = replaceContextPath(url);
                 }
                 url += getString(node, PN_SUFFIX, EMPTY);
             }
         }
         return url;
+    }
+
+    /**
+     * Override for testing.
+     */
+    protected String getExternalLinkFromId(final String url, final String linkType) {
+        switch (linkType) {
+            case VanityUrlService.PN_PAGE:
+                return LinkUtil.createExternalLink(getNodeByIdentifier(WEBSITE, url));
+            case VanityUrlService.PN_ASSET:
+                // using substring here, because we need to strip the 'jcr:' part in front
+                return LinkUtil.createExternalLink(getNodeByIdentifier("dam", url.substring(4)));
+            default:
+                throw new AssertionError("This statement should not be reached");
+        }
     }
 
     @Inject

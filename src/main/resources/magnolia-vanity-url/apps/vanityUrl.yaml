@@ -1,0 +1,377 @@
+name: vanityUrl
+appClass: info.magnolia.ui.contentapp.ContentApp
+icon: icon-share
+class: info.magnolia.ui.contentapp.ConfiguredContentAppDescriptor
+subApps:
+  browser:
+    subAppClass: info.magnolia.ui.contentapp.browser.BrowserSubApp
+    class: info.magnolia.ui.contentapp.browser.BrowserSubAppDescriptor
+    actions:
+      addUrl:
+        subAppId: detail
+        icon: icon-add-item
+        nodeType: mgnl:vanityUrl
+        appName: vanityUrl
+        class: info.magnolia.ui.contentapp.detail.action.CreateItemActionDefinition
+        availability:
+          root: true
+          nodeTypes:
+            folder: mgnl:folder
+      delete:
+        command: delete
+        class: info.magnolia.ui.framework.action.DeleteActionDefinition
+      editUrl:
+        subAppId: detail
+        icon: icon-edit
+        appName: vanityUrl
+        class: info.magnolia.ui.contentapp.detail.action.EditItemActionDefinition
+        availability:
+          nodeTypes:
+            mgnl-vanityUrl: mgnl:vanityUrl
+      activate:
+        recursive: true
+        command: activate
+        icon: icon-publish
+        class: info.magnolia.ui.framework.action.ActivationActionDefinition
+      deactivate:
+        command: deactivate
+        icon: icon-unpublish
+        class: info.magnolia.ui.framework.action.DeactivationActionDefinition
+      confirmDeleteUrl:
+        successActionName: delete
+        icon: icon-delete
+        class: info.magnolia.ui.framework.action.ConfirmationActionDefinition
+        availability:
+          multiple: true
+      preview:
+        subAppId: preview
+        icon: icon-view
+        appName: vanityUrl
+        class: com.aperto.magnolia.vanity.app.PreviewActionDefinition
+        availability:
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+      viewCode:
+        subAppId: preview
+        implementationClass: com.aperto.magnolia.vanity.app.QrCodeViewAction
+        icon: icon-view
+        appName: vanityUrl
+        class: com.aperto.magnolia.vanity.app.PreviewActionDefinition
+        availability:
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+      addFolder:
+        icon: icon-add-folder
+        class: info.magnolia.ui.framework.action.AddFolderActionDefinition
+        availability:
+          writePermissionRequired: true
+          root: true
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+      editFolder:
+        dialogName: ui-framework:folder
+        icon: icon-edit
+        class: info.magnolia.ui.framework.action.OpenEditDialogActionDefinition
+        availability:
+          writePermissionRequired: true
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+      confirmDeleteFolder:
+        icon: icon-delete
+        successActionName: deleteFolder
+        class: info.magnolia.ui.framework.action.ConfirmationActionDefinition
+        availability:
+          multiple: true
+      deleteFolder:
+        asynchronous: true
+        command: markAssetFolderAsDeleted
+        catalog: dam
+        class: info.magnolia.ui.framework.action.MarkNodeAsDeletedActionDefinition
+      activateRecursive:
+        asynchronous: true
+        command: activate
+        icon: icon-publish-incl-sub
+        notifyUser: false
+        recursive: true
+        class: info.magnolia.ui.framework.action.ActivationActionDefinition
+        availability:
+          writePermissionRequired: true
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+            - name: IsPublishableRule
+              implementationClass: info.magnolia.ui.framework.availability.IsPublishableRule
+      move:
+        icon: icon-move
+        class: info.magnolia.ui.contentapp.movedialog.action.OpenMoveDialogActionDefinition
+        availability:
+          multiple: true
+          writePermissionRequired: true
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+      moveFolder:
+        icon: icon-move
+        class: info.magnolia.ui.contentapp.movedialog.action.OpenMoveDialogActionDefinition
+        availability:
+          multiple: true
+          writePermissionRequired: true
+          rules:
+            - name: IsNotDeletedRule
+              implementationClass: info.magnolia.ui.framework.availability.IsNotDeletedRule
+    actionbar:
+      defaultAction: editUrl
+      sections:
+        - name: root
+          groups:
+            - name: addActions
+              items:
+                - name: addUrl
+                - name: addFolder
+          availability:
+            nodes: false
+            root: true
+        - name: folder
+          availability:
+            nodeTypes:
+              mgnl-folder: mgnl:folder
+          groups:
+            - name: addActions
+              items:
+                - name: addUrl
+                - name: addFolder
+                - name: confirmDeleteFolder
+            - name: editActions
+              items:
+                - name: editFolder
+                - name: moveFolder
+            - name: activationActions
+              items:
+                - name: activate
+                - name: activateRecursive
+                - name: deactivate
+            - name: importExportActions
+              items:
+                - name: export
+                - name: import
+        - name: url
+          groups:
+            - name: addActions
+              items:
+                - name: addUrl
+                - name: confirmDeleteUrl
+            - name: editActions
+              items:
+                - name: editUrl
+                - name: preview
+                - name: viewCode
+                - name: move
+            - name: activationActions
+              items:
+                - name: activate
+                - name: deactivate
+          availability:
+            nodeTypes:
+              vanityUrl: mgnl:vanityUrl
+        - name: multiple
+          groups:
+            - name: deleteActions
+              items:
+                - name: confirmDeleteUrl
+            - name: activationActions
+              items:
+                - name: activate
+                - name: deactivate
+    workbench:
+      dropConstraintClass: com.aperto.magnolia.vanity.app.VanityUrlDropConstraint
+      editable: false
+      contentViews:
+        - name: tree
+          class: info.magnolia.ui.workbench.tree.TreePresenterDefinition
+          columns:
+            - name: name
+              expandRatio: 2.0
+              formatterClass: com.aperto.magnolia.vanity.app.FolderUrlNameColumnFormatter
+              propertyName: vanityUrl
+              sortable: true
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: site
+              expandRatio: 1.0
+              propertyName: site
+              sortable: true
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: link
+              expandRatio: 3.0
+              sortable: true
+              class: com.aperto.magnolia.vanity.app.LinkColumnDefinition
+            - name: status
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.StatusColumnFormatter
+              width: 46
+              class: info.magnolia.ui.workbench.column.definition.StatusColumnDefinition
+            - name: moddate
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.DateColumnFormatter
+              propertyName: mgnl:lastModified
+              sortable: true
+              width: 160
+              class: info.magnolia.ui.workbench.column.definition.MetaDataColumnDefinition
+        - name: list
+          class: info.magnolia.ui.workbench.list.ListPresenterDefinition
+          columns:
+            - name: name
+              sortable: true
+              expandRatio: 2.0
+              formatterClass: com.aperto.magnolia.vanity.app.FolderUrlNameColumnFormatter
+              propertyName: vanityUrl
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: site
+              sortable: true
+              expandRatio: 1.0
+              propertyName: site
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: link
+              sortable: true
+              expandRatio: 3.0
+              class: com.aperto.magnolia.vanity.app.LinkColumnDefinition
+            - name: status
+              width: 46
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.StatusColumnFormatter
+              class: info.magnolia.ui.workbench.column.definition.StatusColumnDefinition
+            - name: moddate
+              width: 160
+              sortable: true
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.DateColumnFormatter
+              propertyName: mgnl:lastModified
+              class: info.magnolia.ui.workbench.column.definition.MetaDataColumnDefinition
+        - name: search
+          class: info.magnolia.ui.workbench.search.SearchPresenterDefinition
+          columns:
+            - name: name
+              expandRatio: 2.0
+              formatterClass: com.aperto.magnolia.vanity.app.FolderUrlNameColumnFormatter
+              propertyName: vanityUrl
+              sortable: true
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: site
+              expandRatio: 1.0
+              propertyName: site
+              sortable: true
+              class: info.magnolia.ui.workbench.column.definition.PropertyColumnDefinition
+            - name: link
+              expandRatio: 3.0
+              sortable: true
+              class: com.aperto.magnolia.vanity.app.LinkColumnDefinition
+            - name: status
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.StatusColumnFormatter
+              width: 46
+              class: info.magnolia.ui.workbench.column.definition.StatusColumnDefinition
+            - name: moddate
+              displayInChooseDialog: false
+              formatterClass: info.magnolia.ui.workbench.column.DateColumnFormatter
+              propertyName: mgnl:lastModified
+              sortable: true
+              width: 160
+              class: info.magnolia.ui.workbench.column.definition.MetaDataColumnDefinition
+    imageProvider:
+      originalImageNodeName: qrCode
+      imageProviderClass: info.magnolia.ui.imageprovider.DefaultImageProvider
+      class: info.magnolia.ui.imageprovider.definition.ConfiguredImageProviderDefinition
+    contentConnector:
+      includeProperties: false
+      workspace: vanityUrls
+      rootPath: /
+      defaultOrder: jcrName
+      nodeTypes:
+        - name: mgnl:vanityUrl
+          icon: icon-favorites
+        - name: mgnl:folder
+          icon: icon-folder-l
+  detail:
+    subAppClass: com.aperto.magnolia.vanity.app.VanityUrlDetailSubApp
+    class: info.magnolia.ui.contentapp.detail.DetailSubAppDescriptor
+    editor:
+      nodeType:
+        name: mgnl:vanityUrl
+        icon: icon-node-content
+      actions:
+        - name: commit
+        - name: cancel
+      form:
+        tabs:
+          - name: vanityUrl
+            fields:
+              - name: vanityUrl
+                required: true
+                class: info.magnolia.ui.form.field.definition.TextFieldDefinition
+              - name: site
+                defaultValue: default
+                required: true
+                sortOptions: false
+                class: com.aperto.magnolia.vanity.app.SiteSelectFieldDefinition
+              - name: link
+                class: info.magnolia.ui.form.field.definition.SwitchableFieldDefinition
+                transformerClass: info.magnolia.ui.form.field.transformer.composite.DelegatingCompositeFieldTransformer
+                options:
+                  - name: toPage
+                    selected: true
+                    value: toPage
+                  - name: toAsset
+                    value: toAsset
+                fields:
+                  - name: toPage
+                    required: true
+                    targetWorkspace: website
+                    appName: pages
+                    class: info.magnolia.ui.form.field.definition.LinkFieldDefinition
+                    identifierToPathConverter:
+                      class: com.aperto.magnolia.vanity.app.LinkConverter
+                  - name: toAsset
+                    required: true
+                    targetWorkspace: dam
+                    appName: assets
+                    class: info.magnolia.ui.form.field.definition.LinkFieldDefinition
+                    identifierToPathConverter:
+                      class: info.magnolia.dam.app.assets.field.translator.AssetCompositeIdKeyTranslator
+                    contentPreviewDefinition:
+                      contentPreviewClass: info.magnolia.dam.app.ui.field.DamFilePreviewComponent
+              - name: linkSuffix
+                class: info.magnolia.ui.form.field.definition.TextFieldDefinition
+              - name: type
+                required: true
+                sortOptions: false
+                class: info.magnolia.ui.form.field.definition.OptionGroupFieldDefinition
+                options:
+                  - name: 301
+                    selected: true
+                  - name: 302
+                    value: 302
+                  - name: forward
+                    value: forward
+    actions:
+      commit:
+        implementationClass: com.aperto.magnolia.vanity.app.VanityUrlSaveFormAction
+        class: info.magnolia.ui.form.action.SaveFormActionDefinition
+      cancel:
+        class: info.magnolia.ui.form.action.CancelFormActionDefinition
+    contentConnector:
+      defaultOrder: jcrName
+      includeProperties: false
+      rootPath: /
+      workspace: vanityUrls
+      nodeTypes:
+        - icon: icon-favorites
+          name: mgnl:vanityUrl
+        - icon: icon-folder-l
+          name: mgnl:folder
+  preview:
+    label: vanityUrl.app.preview.label
+    subAppClass: info.magnolia.ui.framework.app.embedded.EmbeddedPageSubApp
+    class: info.magnolia.ui.framework.app.embedded.EmbeddedPageSubAppDescriptor

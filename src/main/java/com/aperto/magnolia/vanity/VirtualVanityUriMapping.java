@@ -22,25 +22,24 @@ package com.aperto.magnolia.vanity;
  * #L%
  */
 
+
+import info.magnolia.cms.beans.config.QueryAwareVirtualURIMapping;
 import info.magnolia.context.MgnlContext;
 import info.magnolia.module.ModuleRegistry;
 import info.magnolia.module.site.ExtendedAggregationState;
 import info.magnolia.module.site.Site;
-import info.magnolia.virtualuri.VirtualUriMapping;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import java.net.URI;
+
 import java.util.Map;
-import java.util.Optional;
 import java.util.regex.PatternSyntaxException;
 
 import static com.aperto.magnolia.vanity.VanityUrlService.DEF_SITE;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.containsAny;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
@@ -49,37 +48,50 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
  *
  * @author frank.sommer
  */
-public class VirtualVanityUriMapping implements VirtualUriMapping {
+public class VirtualVanityUriMapping implements QueryAwareVirtualURIMapping {
     private static final Logger LOGGER = LoggerFactory.getLogger(VirtualVanityUriMapping.class);
+    private Provider<VanityUrlModule> _vanityUrlModuleProvider;
+    private Provider<VanityUrlService> _vanityUrlServiceProvider;
+    private Provider<ModuleRegistry> _moduleRegistryProvider;
 
-    private Provider<VanityUrlModule> _vanityUrlModule;
-    private Provider<VanityUrlService> _vanityUrlService;
-    private Provider<ModuleRegistry> _moduleRegistry;
 
     @Inject
-    public void setVanityUrlModule(final Provider<VanityUrlModule> vanityUrlModule) {
-        _vanityUrlModule = vanityUrlModule;
+    public void setVanityUrlModule(final Provider<VanityUrlModule> vanityUrlModuleProvider) {
+        _vanityUrlModuleProvider = vanityUrlModuleProvider;
     }
 
     @Inject
-    public void setVanityUrlService(final Provider<VanityUrlService> vanityUrlService) {
-        _vanityUrlService = vanityUrlService;
+    public void setVanityUrlService(final Provider<VanityUrlService> vanityUrlServiceProvider) {
+        _vanityUrlServiceProvider = vanityUrlServiceProvider;
     }
 
     @Inject
-    public void setModuleRegistry(final Provider<ModuleRegistry> moduleRegistry) {
-        _moduleRegistry = moduleRegistry;
+    public void setModuleRegistry(final Provider<ModuleRegistry> moduleRegistryProvider) {
+        _moduleRegistryProvider = moduleRegistryProvider;
     }
 
+    // CHECKSTYLE:OFF
     @Override
-    public Optional<Result> mapUri(final URI uri) {
-        Optional<Result> result = Optional.empty();
+    public MappingResult mapURI(String uri) {
+        // CHECKSTYLE:ON
+        return mapURI(uri, null);
+    }
+
+    // CHECKSTYLE:OFF
+    @Override
+    public MappingResult mapURI(String uri, String queryString) {
+        // CHECKSTYLE:ON
+        MappingResult result = null;
         try {
-            String vanityUrl = uri.getPath();
-            if (isVanityCandidate(vanityUrl)) {
-                String toUri = getUriOfVanityUrl(vanityUrl);
+            if (isVanityCandidate(uri)) {
+                String toUri = getUriOfVanityUrl(uri);
                 if (isNotBlank(toUri)) {
-                    result = Optional.of(new Result(toUri, vanityUrl.length(), this));
+                    if (!containsAny(toUri, "?#") && isNotBlank(queryString)) {
+                        toUri = toUri.concat("?" + queryString);
+                    }
+                    result = new MappingResult();
+                    result.setToURI(toUri);
+                    result.setLevel(uri.length());
                 }
             }
         } catch (PatternSyntaxException e) {
@@ -91,7 +103,7 @@ public class VirtualVanityUriMapping implements VirtualUriMapping {
     private boolean isVanityCandidate(String uri) {
         boolean contentUri = !isRootRequest(uri);
         if (contentUri) {
-            Map<String, String> excludes = _vanityUrlModule.get().getExcludes();
+            Map<String, String> excludes = _vanityUrlModuleProvider.get().getExcludes();
             for (String exclude : excludes.values()) {
                 if (isNotEmpty(exclude) && uri.matches(exclude)) {
                     contentUri = false;
@@ -107,44 +119,18 @@ public class VirtualVanityUriMapping implements VirtualUriMapping {
     }
 
     private String getUriOfVanityUrl(final String vanityUrl) {
-        final String siteName = retrieveSite();
-        Node node = null;
-
-        try {
-            // do it in system context, so the anonymous need no read rights for using vanity urls
-            node = MgnlContext.doInSystemContext(
-                (MgnlContext.Op<Node, RepositoryException>) () -> _vanityUrlService.get().queryForVanityUrlNode(vanityUrl, siteName)
-            );
-        } catch (RepositoryException e) {
-            LOGGER.warn("Error on querying for vanity url.", e);
-        }
-
-        return node == null ? EMPTY : createUrlForVanityNode(node);
-    }
-
-    /**
-     * Override for alternative redirect url creation.
-     *
-     * @param node vanity url node
-     * @return redirect or forward url
-     */
-    protected String createUrlForVanityNode(final Node node) {
-        return _vanityUrlService.get().createRedirectUrl(node);
+        return _vanityUrlServiceProvider.get().createRedirectUrl(
+                _vanityUrlServiceProvider.get().queryForVanityUrlNode(vanityUrl, retrieveSite()));
     }
 
     private String retrieveSite() {
         String siteName = DEF_SITE;
 
-        if (_moduleRegistry.get().isModuleRegistered("multisite")) {
+        if (_moduleRegistryProvider.get().isModuleRegistered("multisite")) {
             Site site = ((ExtendedAggregationState) MgnlContext.getAggregationState()).getSite();
             siteName = site.getName();
         }
 
         return siteName;
-    }
-
-    @Override
-    public boolean isValid() {
-        return _vanityUrlService.get() != null;
     }
 }

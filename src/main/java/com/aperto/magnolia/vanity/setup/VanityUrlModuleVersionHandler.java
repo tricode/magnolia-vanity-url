@@ -22,14 +22,18 @@ package com.aperto.magnolia.vanity.setup;
  * #L%
  */
 
+
 import info.magnolia.jcr.nodebuilder.task.NodeBuilderTask;
 import info.magnolia.module.DefaultModuleVersionHandler;
 import info.magnolia.module.InstallContext;
 import info.magnolia.module.delta.BootstrapConditionally;
 import info.magnolia.module.delta.BootstrapSingleModuleResource;
+import info.magnolia.module.delta.BootstrapSingleResource;
 import info.magnolia.module.delta.DeltaBuilder;
+import info.magnolia.module.delta.RemoveNodeTask;
 import info.magnolia.module.delta.Task;
 
+import javax.jcr.ImportUUIDBehavior;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +42,6 @@ import static info.magnolia.jcr.nodebuilder.Ops.addNode;
 import static info.magnolia.jcr.nodebuilder.Ops.addProperty;
 import static info.magnolia.jcr.nodebuilder.task.ErrorHandling.logging;
 import static info.magnolia.jcr.util.NodeTypes.ContentNode;
-import static info.magnolia.module.delta.DeltaBuilder.update;
 import static info.magnolia.repository.RepositoryConstants.CONFIG;
 
 /**
@@ -49,37 +52,43 @@ import static info.magnolia.repository.RepositoryConstants.CONFIG;
 public class VanityUrlModuleVersionHandler extends DefaultModuleVersionHandler {
 
     private final Task _addAppToLauncher = new NodeBuilderTask("Add app to app launcher", "Add vanity url app to app launcher.", logging, CONFIG, "/modules/ui-admincentral/config/appLauncherLayout/groups/manage/apps",
-        addNode("vanityUrl", ContentNode.NAME)
+            addNode("vanityUrl", ContentNode.NAME)
     );
 
     private final Task _addUriRepositoryMapping = new NodeBuilderTask("Add repository mapping", "Add uri to repository mapping for vanityUrls.", logging, CONFIG, "/server/URI2RepositoryMapping/mappings",
-        addNode(WORKSPACE, ContentNode.NAME).then(
-            addProperty("URIPrefix", (Object) ("/" + WORKSPACE)),
-            addProperty("handlePrefix", (Object) ""),
-            addProperty("repository", (Object) WORKSPACE)
-        )
+            addNode(WORKSPACE, ContentNode.NAME).then(
+                    addProperty("URIPrefix", "/" + WORKSPACE),
+                    addProperty("handlePrefix", ""),
+                    addProperty("repository", WORKSPACE)
+            )
     );
 
     public VanityUrlModuleVersionHandler() {
-        DeltaBuilder update131 = update("1.3.1", "Update to version 1.3.1");
+        DeltaBuilder update131 = DeltaBuilder.update("1.3.1", "Update to version 1.3.1");
         update131.addTask(new BootstrapConditionally("Bootstrap new config", "Bootstrap new public url service configuration.", "/mgnl-bootstrap/magnolia-vanity-url/config.modules.magnolia-vanity-url.config.publicUrlService.xml"));
         register(update131);
 
-        DeltaBuilder update133 = update("1.3.3", "Update to version 1.3.3");
-        update133.addTask(new BootstrapSingleModuleResource("Bootstrap new config", "Bootstrap folder/type definition in app.", "config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
+        DeltaBuilder update133 = DeltaBuilder.update("1.3.3", "Update to version 1.3.3");
+        update133.addTask(new BootstrapSingleResource("Bootstrap new config", "Bootstrap folder/type definition in app.", "/upgrade/config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
         register(update133);
 
-        DeltaBuilder update141 = update("1.4.1", "Update to version 1.4.1");
-        update141.addTask(new BootstrapSingleModuleResource("Bootstrap new config", "Bootstrap folder/type definition in app.", "config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
+        DeltaBuilder update141 = DeltaBuilder.update("1.4.1", "Update to version 1.4.1");
+        update141.addTask(new BootstrapSingleResource("Bootstrap new config", "Bootstrap folder/type definition in app.", "/upgrade/config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
         register(update141);
 
-        DeltaBuilder update142 = update("1.4.2", "Update to version 1.4.2");
-        update142.addTask(new BootstrapSingleModuleResource("Bootstrap new config", "Bootstrap new forward type definition in app dialog.", "config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
+        DeltaBuilder update142 = DeltaBuilder.update("1.4.2", "Update to version 1.4.2");
+        update142.addTask(new RemoveNodeTask("Remove obsolete JCR app config", "/modules/magnolia-vanity-url/apps"));
+        update142.addTask(new RestructureExistingVanityNodesTask());
         register(update142);
 
-        DeltaBuilder update150 = DeltaBuilder.update("1.5.0", "Update to version 1.5.0");
-        update150.addTask(new BootstrapSingleModuleResource("Bootstrap new config", "Bootstrap new validation in app dialog.", "config.modules.magnolia-vanity-url.apps.vanityUrl.xml"));
-        register(update150);
+        DeltaBuilder update146 = DeltaBuilder.update("1.4.6", "Update to version 1.4.6");
+        update146.addTask(new BootstrapSingleModuleResource("config.modules.magnolia-vanity-url.config.excludes.xml", ImportUUIDBehavior.IMPORT_UUID_COLLISION_REMOVE_EXISTING));
+        register(update146);
+
+        DeltaBuilder update156 = DeltaBuilder.update("1.5.6", "Update to version 1.5.6");
+        update156.addTask(new RemoveNodeTask("Remove obsolete JCR app config", "/modules/magnolia-vanity-url/apps"));
+        update156.addTask(new BootstrapSingleModuleResource("config.modules.magnolia-vanity-url.config.excludes.xml", ImportUUIDBehavior.IMPORT_UUID_COLLISION_REMOVE_EXISTING));
+        register(update156);
     }
 
     @Override

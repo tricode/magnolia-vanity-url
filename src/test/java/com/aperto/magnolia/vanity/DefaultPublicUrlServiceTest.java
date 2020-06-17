@@ -22,12 +22,14 @@ package com.aperto.magnolia.vanity;
  * #L%
  */
 
+
 import info.magnolia.cms.beans.config.ServerConfiguration;
 import info.magnolia.test.mock.jcr.MockNode;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.aperto.magnolia.vanity.VanityUrlService.PN_LINK;
+import static com.aperto.magnolia.vanity.VanityUrlService.PN_LINKTYPE;
+import static com.aperto.magnolia.vanity.VanityUrlService.PN_PAGE;
 import static com.aperto.magnolia.vanity.VanityUrlService.PN_VANITY_URL;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
@@ -47,7 +49,8 @@ public class DefaultPublicUrlServiceTest {
     public void testExternalTarget() throws Exception {
         MockNode mockNode = new MockNode("node");
         mockNode.setProperty(PN_VANITY_URL, "/aperto");
-        mockNode.setProperty(PN_LINK, "http://www.aperto.de");
+        mockNode.setProperty(PN_LINKTYPE, PN_PAGE);
+        mockNode.setProperty(PN_PAGE, "http://www.aperto.de");
 
         assertThat(_service.createTargetUrl(mockNode), equalTo("http://www.aperto.de"));
         assertThat(_service.createVanityUrl(mockNode), equalTo("http://www.aperto.de/aperto"));
@@ -57,7 +60,8 @@ public class DefaultPublicUrlServiceTest {
     public void testInternalTarget() throws Exception {
         MockNode mockNode = new MockNode("node");
         mockNode.setProperty(PN_VANITY_URL, "/aperto");
-        mockNode.setProperty(PN_LINK, "123-456-789");
+        mockNode.setProperty(PN_LINKTYPE, PN_PAGE);
+        mockNode.setProperty(PN_PAGE, "123-456-789");
 
         assertThat(_service.createTargetUrl(mockNode), equalTo("http://www.aperto.de/context/page.html"));
         assertThat(_service.createVanityUrl(mockNode), equalTo("http://www.aperto.de/aperto"));
@@ -67,7 +71,8 @@ public class DefaultPublicUrlServiceTest {
     public void testExternalTargetWithConfiguredTargetContextPath() throws Exception {
         MockNode mockNode = new MockNode("node");
         mockNode.setProperty(PN_VANITY_URL, "/aperto");
-        mockNode.setProperty(PN_LINK, "http://www.aperto.de");
+        mockNode.setProperty(PN_LINKTYPE, PN_PAGE);
+        mockNode.setProperty(PN_PAGE, "http://www.aperto.de");
         _service.setTargetContextPath("/public");
 
         assertThat(_service.createTargetUrl(mockNode), equalTo("http://www.aperto.de"));
@@ -78,7 +83,8 @@ public class DefaultPublicUrlServiceTest {
     public void testInternalTargetWithConfiguredTargetContextPath() throws Exception {
         MockNode mockNode = new MockNode("node");
         mockNode.setProperty(PN_VANITY_URL, "/aperto");
-        mockNode.setProperty(PN_LINK, "123-456-789");
+        mockNode.setProperty(PN_LINKTYPE, PN_PAGE);
+        mockNode.setProperty(PN_PAGE, "123-456-789");
         _service.setTargetContextPath("/public");
 
         assertThat(_service.createTargetUrl(mockNode), equalTo("http://www.aperto.de/context/page.html"));
@@ -86,10 +92,10 @@ public class DefaultPublicUrlServiceTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         _service = new DefaultPublicUrlService() {
             @Override
-            public String getExternalLinkFromId(final String nodeId) {
+            protected String getExternalLinkFromId(final String url, String linkType) {
                 return "http://www.aperto.de/context/page.html";
             }
         };
